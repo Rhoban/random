@@ -1,6 +1,6 @@
 #include "rhoban_random/uniform_distribution.h"
 #include <stdexcept>
-
+#include <limits>
 #include <cmath>
 
 namespace rhoban_random
