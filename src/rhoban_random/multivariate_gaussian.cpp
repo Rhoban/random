@@ -72,7 +72,9 @@ MultivariateGaussian::MultivariateGaussian(const Eigen::VectorXd& mean, const Ei
   // Check size
   if (mean.size() != covariance.rows() || mean.size() != covariance.cols())
   {
-    throw std::logic_error("MultivariateGaussian invalid input size");
+    throw std::logic_error("MultivariateGaussian: invalid input size: mean is " + std::to_string(mean.size()) +
+                           " and covar is " + std::to_string(covariance.rows()) + "x" +
+                           std::to_string(covariance.cols()));
   }
   if (isCircular.size() != 0 && isCircular.size() != mean.size())
   {
