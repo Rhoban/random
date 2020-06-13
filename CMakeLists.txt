@@ -39,3 +39,16 @@ endforeach (DIRECTORY)
 add_library(rhoban_random
   ${ALL_SOURCES}
 )
+
+set(TESTS
+  gaussian_mixture_model
+  )
+
+if (CATKIN_ENABLE_TESTING)
+  # create an executable for each test
+  foreach(test ${TESTS})
+    string(REPLACE "/" "_" id ${test})
+    catkin_add_gtest(${id} tests/${test}.cpp)
+    target_link_libraries(${id} ${catkin_LIBRARIES} rhoban_random)
+  endforeach(test)
+endif()

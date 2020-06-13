@@ -50,7 +50,7 @@ public:
   /// it is preferable to use getLogLikelihood
   double getLikelihood(const Eigen::VectorXd& point) const;
 
-  /// Return the logarithm of the given point
+  /// Return the logarithm of the likelihood at the given point
   double getLogLikelihood(const Eigen::VectorXd& point) const;
 
   /// Compute the classic estimation of gaussian mean and covariance from given
