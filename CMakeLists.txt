@@ -1,19 +1,24 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rhoban_random)
 
+# OpenCV required for Expectation Maximization
+find_package(OpenCV 3.2.0 REQUIRED)
+
 find_package(catkin REQUIRED COMPONENTS
   eigen)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
+
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES rhoban_random
+  INCLUDE_DIRS include ${OpenCV_INCLUDE_DIRS}
+  LIBRARIES rhoban_random ${OpenCV_LIBS}
   CATKIN_DEPENDS eigen
 )
 
 include_directories(
   include
+  ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   )
 
@@ -39,6 +44,10 @@ endforeach (DIRECTORY)
 add_library(rhoban_random
   ${ALL_SOURCES}
 )
+target_link_libraries(rhoban_random ${OpenCV_LIBS})
+
+add_executable(expectation_maximization examples/expectation_maximization.cpp)
+target_link_libraries(expectation_maximization rhoban_random ${OpenCV_LIBS})
 
 set(TESTS
   gaussian_mixture_model
@@ -49,6 +58,6 @@ if (CATKIN_ENABLE_TESTING)
   foreach(test ${TESTS})
     string(REPLACE "/" "_" id ${test})
     catkin_add_gtest(${id} tests/${test}.cpp)
-    target_link_libraries(${id} ${catkin_LIBRARIES} rhoban_random)
+    target_link_libraries(${id} ${catkin_LIBRARIES} rhoban_random ${OpenCV_LIBS})
   endforeach(test)
 endif()

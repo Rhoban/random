@@ -2,6 +2,10 @@
 
 #include <rhoban_random/tools.h>
 
+// #include <Eigen/Dense>
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/ml.hpp>
+
 namespace rhoban_random
 {
 GaussianMixtureModel::GaussianMixtureModel()
@@ -112,6 +116,64 @@ double GaussianMixtureModel::getLogLikelihood(const Eigen::VectorXd& point) cons
     likelihood += exp(log(gaussians_weights[i]) + gaussians[i].getLogLikelihood(point));
   }
   return log(likelihood / getTotalWeight());
+}
+
+cv::ml::EM::Types getCVType(GaussianMixtureModel::EMCovMatType type)
+{
+  switch (type)
+  {
+    case GaussianMixtureModel::EMCovMatType::COV_MAT_SPHERICAL:
+      return cv::ml::EM::COV_MAT_SPHERICAL;
+    case GaussianMixtureModel::EMCovMatType::COV_MAT_DIAGONAL:
+      return cv::ml::EM::COV_MAT_DIAGONAL;
+    case GaussianMixtureModel::EMCovMatType::COV_MAT_GENERIC:
+      return cv::ml::EM::COV_MAT_GENERIC;
+    default:
+      throw std::logic_error("Unknown type");
+  }
+}
+
+GaussianMixtureModel GaussianMixtureModel::EM(int n, const Eigen::MatrixXd& inputs, EMCovMatType cov_mat_type,
+                                              Eigen::VectorXi* labels, size_t max_iterations, double epsilon)
+{
+  int nb_points = inputs.cols();
+  int D = inputs.rows();
+  std::cout << "Starting EM with: " << std::endl
+            << "\tNb points: " << nb_points << std::endl
+            << "\tDim: " << D << std::endl
+            << "\tNb gaussians wished: " << n << std::endl;
+  cv::Mat cv_points;
+  Eigen::MatrixXd points = inputs.transpose();
+  cv::eigen2cv(points, cv_points);
+  cv::Ptr<cv::ml::EM> em_model = cv::ml::EM::create();
+  em_model->setClustersNumber(n);
+  em_model->setCovarianceMatrixType(getCVType(cov_mat_type));
+  em_model->setTermCriteria(cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, max_iterations, epsilon));
+  cv::Mat cv_labels = cv::Mat::zeros(nb_points, 1, CV_32S);
+  em_model->trainEM(cv_points, cv::noArray(), cv_labels, cv::noArray());
+  /// Importing result
+  std::vector<cv::Mat> covs;
+  em_model->getCovs(covs);
+  cv::Mat means = em_model->getMeans();
+  cv::Mat weights = em_model->getWeights();
+  std::cout << "Means size: " << means.size() << std::endl;
+  GaussianMixtureModel result;
+  for (int i = 0; i < n; i++)
+  {
+    Eigen::VectorXd mean;
+    Eigen::MatrixXd covar;
+    double weight;
+    cv::cv2eigen(means.row(i).t(), mean);
+    cv::cv2eigen(covs[i], covar);
+    weight = weights.at<double>(i);
+    std::cout << "Adding a gaussian with: " << std::endl
+              << "mean: " << mean.transpose() << std::endl
+              << "covar:" << std::endl
+              << covar << std::endl
+              << "weight: " << weight << std::endl;
+    result.addGaussian(MultivariateGaussian(mean, covar), weight);
+  }
+  return result;
 }
 
 }  // namespace rhoban_random
