@@ -5,7 +5,9 @@ project(rhoban_random)
 find_package(OpenCV 3.2.0 REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
-  eigen)
+  eigen
+  rhoban_utils
+  tclap)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
@@ -13,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 catkin_package(
   INCLUDE_DIRS include ${OpenCV_INCLUDE_DIRS}
   LIBRARIES rhoban_random ${OpenCV_LIBS}
-  CATKIN_DEPENDS eigen
+  CATKIN_DEPENDS eigen rhoban_utils tclap
 )
 
 include_directories(
@@ -44,10 +46,13 @@ endforeach (DIRECTORY)
 add_library(rhoban_random
   ${ALL_SOURCES}
 )
-target_link_libraries(rhoban_random ${OpenCV_LIBS})
+target_link_libraries(rhoban_random ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(expectation_maximization examples/expectation_maximization.cpp)
-target_link_libraries(expectation_maximization rhoban_random ${OpenCV_LIBS})
+target_link_libraries(expectation_maximization rhoban_random ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(generate_gmm_samples examples/generate_gmm_samples.cpp)
+target_link_libraries(generate_gmm_samples rhoban_random ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 set(TESTS
   gaussian_mixture_model

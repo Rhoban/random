@@ -6,26 +6,21 @@
 #include <random>
 #include <Eigen/Core>
 
+#include <rhoban_utils/serialization/json_serializable.h>
+
 namespace rhoban_random
 {
 /// This class implement a Multivariate Gaussian distribution. It provides
 /// access to measures such as the density of probability at a given point
-///
-/// !!! Note that the current implementation for angles is not really the
-/// !!! wrapped normal distribution. Probability and fitting methods are
-/// !!! therefore quite wrong when the circular standard deviation is high
-/// !!! (around pi/2 or above)
-class MultivariateGaussian
+class MultivariateGaussian : public rhoban_utils::JsonSerializable
 {
 public:
   /// Dummy empty initialization
   MultivariateGaussian();
 
-  /// Initialization with mean vector and covariance matrix.  If optional
-  /// isCircular is not empty, each non zero value means that associated
-  /// dimension is an angle in radian.
-  MultivariateGaussian(const Eigen::VectorXd& mean, const Eigen::MatrixXd& covariance,
-                       const Eigen::VectorXi& isCircular = Eigen::VectorXi());
+  /// Initialization with mean vector and covariance matrix.
+  MultivariateGaussian(const Eigen::VectorXd& mean, const Eigen::MatrixXd& covariance);
+  ~MultivariateGaussian();
 
   /// Return the gaussian
   /// dimentionality
@@ -33,9 +28,6 @@ public:
 
   const Eigen::VectorXd& getMean() const;
   const Eigen::MatrixXd& getCovariance() const;
-
-  /// Access to the vector specifiying for each dimension if it is circular
-  const Eigen::VectorXi& getCircularity() const;
 
   /// Sample a point from the multivariate gaussian with given random engine
   Eigen::VectorXd getSample(std::default_random_engine* engine) const;
@@ -55,9 +47,11 @@ public:
 
   /// Compute the classic estimation of gaussian mean and covariance from given
   /// data vectors.
-  /// If optional isCircular is not empty, each non zero value
-  /// means that associated dimension is an angle in radian.
-  void fit(const std::vector<Eigen::VectorXd>& points, const Eigen::VectorXi& isCircular = Eigen::VectorXi());
+  void fit(const std::vector<Eigen::VectorXd>& points);
+
+  std::string getClassName() const override;
+  void fromJson(const Json::Value& value, const std::string& dir_name) override;
+  Json::Value toJson() const override;
 
 private:
   /// The mean vector
@@ -65,13 +59,6 @@ private:
 
   /// The covariance matrix (symetrix definite positive)
   Eigen::MatrixXd covar;
-
-  /// Not null integer for each dimension where the represented value is an angle
-  /// in radian in [-pi,pi].
-  Eigen::VectorXi dims_circularity;
-
-  /// Does the distribution has at least one circular dimension
-  bool has_circular;
 
   /// The inverse of covariance matrix computed through cholesky decomposition
   Eigen::MatrixXd covar_inv;

@@ -2,7 +2,6 @@
 
 #include <rhoban_random/tools.h>
 
-// #include <Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/ml.hpp>
 
@@ -20,6 +19,9 @@ GaussianMixtureModel::GaussianMixtureModel(const std::vector<MultivariateGaussia
   {
     addGaussian(new_gaussians[i], new_weights[i]);
   }
+}
+GaussianMixtureModel::~GaussianMixtureModel()
+{
 }
 
 size_t GaussianMixtureModel::size() const
@@ -113,9 +115,56 @@ double GaussianMixtureModel::getLogLikelihood(const Eigen::VectorXd& point) cons
   double likelihood = 0;
   for (int i = 0; i < size(); i++)
   {
-    likelihood += exp(log(gaussians_weights[i]) + gaussians[i].getLogLikelihood(point));
+    likelihood += exp(log(gaussians_weights[i] / getTotalWeight()) + gaussians[i].getLogLikelihood(point));
   }
-  return log(likelihood / getTotalWeight());
+  return log(likelihood);
+}
+double GaussianMixtureModel::getLogLikelihood(const Eigen::MatrixXd& points) const
+{
+  double result = 0.0;
+  for (int idx = 0; idx < points.cols(); idx++)
+  {
+    const Eigen::VectorXd& point = points.col(idx);
+    result += getLogLikelihood(point);
+  }
+  return result;
+}
+
+std::string GaussianMixtureModel::getClassName() const
+{
+  return "GaussianMixtureModel";
+}
+
+void GaussianMixtureModel::fromJson(const Json::Value& v, const std::string& dir_name)
+{
+  std::vector<MultivariateGaussian> new_gaussians = rhoban_utils::readVector<MultivariateGaussian>(
+      v, "gaussians", dir_name, [](const Json::Value& v, const std::string& dir_name) {
+        MultivariateGaussian g;
+        g.fromJson(v, dir_name);
+        return g;
+      });
+  std::vector<double> new_gaussians_weights = rhoban_utils::readVector<double>(v, "gaussians_weights");
+  if (new_gaussians.size() != new_gaussians_weights.size())
+  {
+    throw rhoban_utils::JsonParsingError("Mismatch of size between 'gaussians' and 'gaussians weights'");
+  }
+  gaussians.clear();
+  gaussians_weights.clear();
+  for (size_t idx = 0; idx < new_gaussians.size(); idx++)
+  {
+    addGaussian(new_gaussians[idx], new_gaussians_weights[idx]);
+  }
+}
+
+Json::Value GaussianMixtureModel::toJson() const
+{
+  Json::Value v;
+  for (size_t idx = 0; idx < size(); idx++)
+  {
+    v["gaussians"].append(gaussians[idx].toJson());
+    v["gaussians_weights"].append(gaussians_weights[idx]);
+  }
+  return v;
 }
 
 cv::ml::EM::Types getCVType(GaussianMixtureModel::EMCovMatType type)
@@ -138,10 +187,10 @@ GaussianMixtureModel GaussianMixtureModel::EM(int n, const Eigen::MatrixXd& inpu
 {
   int nb_points = inputs.cols();
   int D = inputs.rows();
-  std::cout << "Starting EM with: " << std::endl
-            << "\tNb points: " << nb_points << std::endl
-            << "\tDim: " << D << std::endl
-            << "\tNb gaussians wished: " << n << std::endl;
+  // std::cout << "Starting EM with: " << std::endl
+  //           << "\tNb points: " << nb_points << std::endl
+  //           << "\tDim: " << D << std::endl
+  //           << "\tNb gaussians wished: " << n << std::endl;
   cv::Mat cv_points;
   Eigen::MatrixXd points = inputs.transpose();
   cv::eigen2cv(points, cv_points);
@@ -156,7 +205,6 @@ GaussianMixtureModel GaussianMixtureModel::EM(int n, const Eigen::MatrixXd& inpu
   em_model->getCovs(covs);
   cv::Mat means = em_model->getMeans();
   cv::Mat weights = em_model->getWeights();
-  std::cout << "Means size: " << means.size() << std::endl;
   GaussianMixtureModel result;
   for (int i = 0; i < n; i++)
   {
@@ -166,11 +214,6 @@ GaussianMixtureModel GaussianMixtureModel::EM(int n, const Eigen::MatrixXd& inpu
     cv::cv2eigen(means.row(i).t(), mean);
     cv::cv2eigen(covs[i], covar);
     weight = weights.at<double>(i);
-    std::cout << "Adding a gaussian with: " << std::endl
-              << "mean: " << mean.transpose() << std::endl
-              << "covar:" << std::endl
-              << covar << std::endl
-              << "weight: " << weight << std::endl;
     result.addGaussian(MultivariateGaussian(mean, covar), weight);
   }
   return result;

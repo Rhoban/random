@@ -5,11 +5,12 @@
 namespace rhoban_random
 {
 /// A model in which multiple MultivariateGaussian are used, each one with its own probability
-class GaussianMixtureModel
+class GaussianMixtureModel : public rhoban_utils::JsonSerializable
 {
 public:
   GaussianMixtureModel();
   GaussianMixtureModel(const std::vector<MultivariateGaussian>& gaussians, const std::vector<double>& weights);
+  virtual ~GaussianMixtureModel();
 
   /// Returns the number of gaussians
   size_t size() const;
@@ -40,6 +41,13 @@ public:
 
   /// Return the logarithm of the likelihood at the given point
   double getLogLikelihood(const Eigen::VectorXd& point) const;
+
+  /// Return the log-likelihood of the given set of point (each column is a different point)
+  double getLogLikelihood(const Eigen::MatrixXd& points) const;
+
+  std::string getClassName() const override;
+  void fromJson(const Json::Value& value, const std::string& dir_name) override;
+  Json::Value toJson() const override;
 
   /// Constraints on covariance Matrix for EM algorithm
   enum EMCovMatType
