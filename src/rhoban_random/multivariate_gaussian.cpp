@@ -191,7 +191,7 @@ Json::Value MultivariateGaussian::toJson() const
 {
   Json::Value v;
   v["mu"] = rhoban_utils::vector2Json(mu);
-  v["covar"] = rhoban_utils::matrix2Json(mu);
+  v["covar"] = rhoban_utils::matrix2Json(covar);
   return v;
 }
 

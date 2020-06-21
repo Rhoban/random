@@ -1,0 +1,38 @@
+{
+    "gaussians" : [
+        {
+            "mu" : {
+                "rows" : 2,
+                "values" : [0.5, 0]
+            },
+            "covar" :  {
+                "rows" : 2,
+                "cols" : 2,
+                "values" : [[5,0.0],[0.0,1.0]]
+            }
+        },
+        {
+            "mu" : {
+                "rows" : 2,
+                "values" : [6.5, 0]
+            },
+            "covar" :  {
+                "rows" : 2,
+                "cols" : 2,
+                "values" : [[1,0.0],[0.0,1.0]]
+            }
+        },
+        {
+            "mu" : {
+                "rows" : 2,
+                "values" : [-3.5, 6]
+            },
+            "covar" :  {
+                "rows" : 2,
+                "cols" : 2,
+                "values" : [[1.0,0.0],[0.0,5.0]]
+            }
+        }
+    ],
+    "gaussians_weights" : [0.2, 0.3, 0.5]
+}

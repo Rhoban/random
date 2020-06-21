@@ -25,6 +25,7 @@ int main(int argc, char** argv)
   Eigen::MatrixXd samples = data.getData().transpose();
   // Fitting EM
   ExpectationMaximization em;
+  em.setMinClusters(2);
   em.analyze(samples);
   // Score results
   em.getScoresTable().dump("results.csv");
