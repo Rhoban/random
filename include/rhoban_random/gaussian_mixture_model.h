@@ -49,28 +49,6 @@ public:
   void fromJson(const Json::Value& value, const std::string& dir_name) override;
   Json::Value toJson() const override;
 
-  /// Constraints on covariance Matrix for EM algorithm
-  enum EMCovMatType
-  {
-    /// Cov Matrix is a scaled Identity matrix ($\alpha I$ with $\alpha the only free parameter)
-    COV_MAT_SPHERICAL,
-    /// Cov Matrix is a diagonal matrix with one free parameter per dimension
-    COV_MAT_DIAGONAL,
-    /// Cov Matrix is symmetric positively defined, order of nb parameters: d^2/2
-    /// TODO: refine the number of parameters implied
-    COV_MAT_GENERIC
-  };
-
-  /// Uses the ExpectationMaximization algorithm to obtain a gaussian mixture model based on the provided points
-  /// - n: number of clusters
-  /// - inputs: each column is a different point
-  /// - labels: if not null, is filled with the id of the gaussian attributed to each element
-  /// - max_iterations: the maximal number of iteration for the EM algorithm
-  /// - epsilon: if improvement of logLikelihood goes below this value, stop iterations
-  static GaussianMixtureModel EM(int n, const Eigen::MatrixXd& inputs, EMCovMatType cov_mat_type,
-                                 Eigen::VectorXi* labels = nullptr, size_t max_iterations = 100,
-                                 double epsilon = std::pow(10, -6));
-
 private:
   std::vector<MultivariateGaussian> gaussians;
   std::vector<double> gaussians_weights;
