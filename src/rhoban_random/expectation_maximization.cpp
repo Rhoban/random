@@ -16,12 +16,12 @@ ExpectationMaximization::ExpectationMaximization()
 {
 }
 
-void ExpectationMaximization::setMinClusters(size_t new_min)
+void ExpectationMaximization::setMinClusters(int new_min)
 {
   min_clusters = new_min;
 }
 
-void ExpectationMaximization::setMaxClusters(size_t new_max)
+void ExpectationMaximization::setMaxClusters(int new_max)
 {
   max_clusters = new_max;
 }
@@ -34,7 +34,7 @@ void ExpectationMaximization::setAllowedCovMatTypes(const std::set<CovMatType>& 
 void ExpectationMaximization::analyze(const Eigen::MatrixXd& data)
 {
   setPoints(data);
-  for (size_t nb_clusters = min_clusters; nb_clusters <= max_clusters; nb_clusters++)
+  for (int nb_clusters = min_clusters; nb_clusters <= max_clusters; nb_clusters++)
   {
     for (CovMatType type : cov_mat_types_allowed)
     {
@@ -84,6 +84,46 @@ rhoban_utils::StringTable ExpectationMaximization::getScoresTable() const
   }
   return result;
 }
+
+std::string ExpectationMaximization::getClassName() const
+{
+  return "Expectation-Maximization";
+}
+
+void ExpectationMaximization::fromJson(const Json::Value& v, const std::string& dir_name)
+{
+  rhoban_utils::tryRead(v, "min_clusters", &min_clusters);
+  rhoban_utils::tryRead(v, "max_clusters", &max_clusters);
+  rhoban_utils::tryRead(v, "max_iterations", &max_iterations);
+  rhoban_utils::tryRead(v, "epsilon", &epsilon);
+  std::vector<std::string> cov_mat_types_str;
+  rhoban_utils::tryReadVector(v, "cov_mat_types_allowed", &cov_mat_types_str);
+  if (cov_mat_types_str.size() != 0)
+  {
+    static std::map<std::string, CovMatType> types = { { "Spherical", CovMatType::Spherical },
+                                                       { "Diagonal", CovMatType::Diagonal },
+                                                       { "Generic", CovMatType::Generic } };
+    for (const std::string& str : cov_mat_types_str)
+    {
+      cov_mat_types_allowed.insert(types.at(str));
+    }
+  }
+}
+
+Json::Value ExpectationMaximization::toJson() const
+{
+  Json::Value v;
+  v["min_clusters"] = (int)min_clusters;
+  v["max_clusters"] = (int)max_clusters;
+  v["max_iterations"] = (int)max_iterations;
+  v["epsilon"] = epsilon;
+  for (CovMatType type : cov_mat_types_allowed)
+  {
+    v["cov_mat_types_allowed"].append(type);
+  }
+  return v;
+}
+
 std::string ExpectationMaximization::toString(rhoban_random::ExpectationMaximization::CovMatType type)
 {
   switch (type)

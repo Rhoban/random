@@ -14,7 +14,7 @@ namespace rhoban_random
 /// It has the following properties
 /// - Keep memory of multiple configurations
 /// - Allows to retrieve for different configurations: BIC score or AIC score
-class ExpectationMaximization
+class ExpectationMaximization : public rhoban_utils::JsonSerializable
 {
 public:
   /// Constraints on covariance Matrix for EM algorithm
@@ -56,8 +56,8 @@ public:
 
   ExpectationMaximization();
 
-  void setMinClusters(size_t new_min);
-  void setMaxClusters(size_t new_max);
+  void setMinClusters(int new_min);
+  void setMaxClusters(int new_max);
   void setAllowedCovMatTypes(const std::set<CovMatType>& allowed_types);
 
   /// Analyze the provided data with all the allowed configurations:
@@ -75,6 +75,10 @@ public:
 
   static std::string toString(rhoban_random::ExpectationMaximization::CovMatType type);
 
+  std::string getClassName() const override;
+  void fromJson(const Json::Value& value, const std::string& dir_name) override;
+  Json::Value toJson() const override;
+
 private:
   /// The points for which a GaussianMixtureModel has to be found
   Eigen::MatrixXd points;
@@ -83,13 +87,13 @@ private:
   std::map<Configuration, Result> entries;
 
   /// Minimal number of clusters
-  size_t min_clusters;
+  int min_clusters;
 
   /// Maximal number of clusters
-  size_t max_clusters;
+  int max_clusters;
 
   /// The maximal number of steps for the EM algorithm
-  size_t max_iterations;
+  int max_iterations;
 
   /// The minimal score improvement for the EM algorithm
   double epsilon;
