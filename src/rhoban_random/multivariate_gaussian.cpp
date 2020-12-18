@@ -304,9 +304,11 @@ void MultivariateGaussian::fromJson(const Json::Value& json_value, const std::st
   mu = rhoban_utils::json2eigen<-1, 1>(json_value["mean"]);
   covar = rhoban_utils::json2eigen<-1, -1>(json_value["covar"]);
   dims_circularity = Eigen::VectorXi(mu.size());
+  has_circular = false;
   for (int k = 0; k < json_value["circularity"].size(); k++)
   {
     dims_circularity[k] = json_value["circularity"][k].asInt();
+    has_circular = has_circular || (dims_circularity[k] != 0);
   }
 
   computeDecomposition();
