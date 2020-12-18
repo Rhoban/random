@@ -1,11 +1,12 @@
 #pragma once
 
 #include <rhoban_random/multivariate_gaussian.h>
+#include "rhoban_utils/serialization/json_serializable.h"
 
 namespace rhoban_random
 {
 /// A model in which multiple MultivariateGaussian are used, each one with its own probability
-class GaussianMixtureModel
+class GaussianMixtureModel : public rhoban_utils::JsonSerializable
 {
 public:
   GaussianMixtureModel();
@@ -40,6 +41,14 @@ public:
 
   /// Return the logarithm of the likelihood at the given point
   double getLogLikelihood(const Eigen::VectorXd& point) const;
+
+  /// Deserializes from a json content found in 'dir_name'
+  void fromJson(const Json::Value& json_value, const std::string& dir_name);
+
+  /// Represent current object as a Json::Value
+  Json::Value toJson() const;
+
+  std::string getClassName() const;
 
 private:
   std::vector<MultivariateGaussian> gaussians;

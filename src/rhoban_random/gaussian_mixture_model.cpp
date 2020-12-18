@@ -114,4 +114,62 @@ double GaussianMixtureModel::getLogLikelihood(const Eigen::VectorXd& point) cons
   return log(likelihood / getTotalWeight());
 }
 
+void GaussianMixtureModel::fromJson(const Json::Value& json_value, const std::string& dir_name)
+{
+  if (!json_value.isMember("weights") || !json_value.isMember("gaussians"))
+  {
+    throw new std::runtime_error("Bad json value for gaussian mixture model (missing entries)");
+  }
+
+  if (json_value["weights"].size() != json_value["gaussians"].size())
+  {
+    throw new std::runtime_error("Dimensions mismatch in json for weights and gaussians");
+  }
+
+  // Reading multivariate gaussians
+  std::vector<MultivariateGaussian> gaussians_from_json;
+  for (int k = 0; k < json_value["gaussians"].size(); k++)
+  {
+    MultivariateGaussian g;
+    g.fromJson(json_value["gaussians"][k], dir_name);
+    gaussians_from_json.push_back(g);
+  }
+
+  // // Reading gaussian weights
+  // std::vector<double> weights_from_json;
+  // for (int k = 0; k < json_value["weights"].size(); k++)
+  // {
+  //   weights_from_json.push_back(json_value["weights"][k].asInt());
+  // }
+
+  // gaussians.clear();
+  // gaussians_weights.clear();
+  // for (int k = 0; k < gaussians_from_json.size(); k++)
+  // {
+  //   addGaussian(gaussians_from_json[k], weights_from_json[k]);
+  // }
+}
+
+Json::Value GaussianMixtureModel::toJson() const
+{
+  Json::Value json;
+
+  Json::Value json_gaussians(Json::arrayValue);
+
+  for (int i = 0; i < size(); i++)
+  {
+    json_gaussians[i] = gaussians[i].toJson();
+  }
+
+  json["gaussians"] = json_gaussians;
+  json["weights"] = rhoban_utils::vector2Json(gaussians_weights);
+
+  return json;
+}
+
+std::string GaussianMixtureModel::getClassName() const
+{
+  return "GaussianMixtureModel";
+}
+
 }  // namespace rhoban_random

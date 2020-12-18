@@ -301,6 +301,11 @@ void MultivariateGaussian::fit(const std::vector<Eigen::VectorXd>& data, const E
 
 void MultivariateGaussian::fromJson(const Json::Value& json_value, const std::string& dir_name)
 {
+  if (!json_value.isMember("mean") || !json_value.isMember("covar") || !json_value.isMember("circularity"))
+  {
+    throw std::runtime_error("Bad json value for multivariate gaussian (missing entries)");
+  }
+
   mu = rhoban_utils::json2eigen<-1, 1>(json_value["mean"]);
   covar = rhoban_utils::json2eigen<-1, -1>(json_value["covar"]);
   dims_circularity = Eigen::VectorXi(mu.size());
@@ -311,23 +316,28 @@ void MultivariateGaussian::fromJson(const Json::Value& json_value, const std::st
     has_circular = has_circular || (dims_circularity[k] != 0);
   }
 
+  if (mu.size() != covar.rows() || mu.size() != covar.cols() || mu.size() != dims_circularity.size())
+  {
+    throw std::runtime_error("Bad dimensions for json items for multivariate gaussians");
+  }
+
   computeDecomposition();
 }
 
 Json::Value MultivariateGaussian::toJson() const
 {
-  Json::Value value(Json::objectValue);
+  Json::Value json(Json::objectValue);
 
-  value["mean"] = rhoban_utils::vector2Json(mu);
-  value["covar"] = rhoban_utils::matrix2Json(covar);
+  json["mean"] = rhoban_utils::vector2Json(mu);
+  json["covar"] = rhoban_utils::matrix2Json(covar);
   Json::Value circularity(Json::arrayValue);
   for (int k = 0; k < dims_circularity.size(); k++)
   {
     circularity[k] = dims_circularity[k];
   }
-  value["circularity"] = circularity;
+  json["circularity"] = circularity;
 
-  return value;
+  return json;
 }
 
 std::string MultivariateGaussian::getClassName() const
