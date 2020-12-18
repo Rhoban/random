@@ -297,6 +297,40 @@ void MultivariateGaussian::fit(const std::vector<Eigen::VectorXd>& data, const E
 
   // Update the Cholesky decomposition
   computeDecomposition();
+};
+
+void MultivariateGaussian::fromJson(const Json::Value& json_value, const std::string& dir_name)
+{
+  mu = rhoban_utils::json2eigen<-1, 1>(json_value["mean"]);
+  covar = rhoban_utils::json2eigen<-1, -1>(json_value["covar"]);
+  dims_circularity = Eigen::VectorXi(mu.size());
+  for (int k = 0; k < json_value["circularity"].size(); k++)
+  {
+    dims_circularity[k] = json_value["circularity"][k].asInt();
+  }
+
+  computeDecomposition();
+}
+
+Json::Value MultivariateGaussian::toJson() const
+{
+  Json::Value value(Json::objectValue);
+
+  value["mean"] = rhoban_utils::vector2Json(mu);
+  value["covar"] = rhoban_utils::matrix2Json(covar);
+  Json::Value circularity(Json::arrayValue);
+  for (int k = 0; k < dims_circularity.size(); k++)
+  {
+    circularity[k] = dims_circularity[k];
+  }
+  value["circularity"] = circularity;
+
+  return value;
+}
+
+std::string MultivariateGaussian::getClassName() const
+{
+  return "MultivariateGaussian";
 }
 
 void MultivariateGaussian::computeDecomposition()

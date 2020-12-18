@@ -5,6 +5,7 @@
 #include <vector>
 #include <random>
 #include <Eigen/Core>
+#include "rhoban_utils/serialization/json_serializable.h"
 
 namespace rhoban_random
 {
@@ -15,7 +16,7 @@ namespace rhoban_random
 /// !!! wrapped normal distribution. Probability and fitting methods are
 /// !!! therefore quite wrong when the circular standard deviation is high
 /// !!! (around pi/2 or above)
-class MultivariateGaussian
+class MultivariateGaussian : public rhoban_utils::JsonSerializable
 {
 public:
   /// Dummy empty initialization
@@ -58,6 +59,14 @@ public:
   /// If optional isCircular is not empty, each non zero value
   /// means that associated dimension is an angle in radian.
   void fit(const std::vector<Eigen::VectorXd>& points, const Eigen::VectorXi& isCircular = Eigen::VectorXi());
+
+  /// Deserializes from a json content found in 'dir_name'
+  void fromJson(const Json::Value& json_value, const std::string& dir_name);
+
+  /// Represent current object as a Json::Value
+  Json::Value toJson() const;
+
+  std::string getClassName() const;
 
 private:
   /// The mean vector

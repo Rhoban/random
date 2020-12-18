@@ -2,14 +2,15 @@ cmake_minimum_required(VERSION 2.8.3)
 project(rhoban_random)
 
 find_package(catkin REQUIRED COMPONENTS
-  eigen)
+  eigen rhoban_utils)
 
+option(RHOBAN_RANDOM_ENABLE_EXAMPLES "Building examples" OFF)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES rhoban_random
-  CATKIN_DEPENDS eigen
+  CATKIN_DEPENDS eigen rhoban_utils
 )
 
 include_directories(
@@ -52,3 +53,8 @@ if (CATKIN_ENABLE_TESTING)
     target_link_libraries(${id} ${catkin_LIBRARIES} rhoban_random)
   endforeach(test)
 endif()
+
+if (RHOBAN_RANDOM_ENABLE_EXAMPLES)
+  add_executable(gmm examples/gmm.cpp)
+  target_link_libraries(gmm ${catkin_LIBRARIES} rhoban_random)
+endif ()
