@@ -194,6 +194,22 @@ std::string GaussianMixtureModel::getClassName() const
   return "GaussianMixtureModel";
 }
 
+void GaussianMixtureModel::remap(const std::vector<int>& remapping)
+{
+  for (int k = 0; k < gaussians.size(); k++)
+  {
+    gaussians[k].remap(remapping);
+  }
+}
+
+void GaussianMixtureModel::remap_invert()
+{
+  for (int k = 0; k < gaussians.size(); k++)
+  {
+    gaussians[k].remap_invert();
+  }
+}
+
 int GaussianMixtureModel::n_parameters() const
 {
   int dim = dimension();

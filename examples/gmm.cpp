@@ -22,18 +22,27 @@ int main()
   GaussianMixtureModel gmm;
   gmm.addGaussian(getMixture(1.0, 0.0, 1.0, 0.8, 0.5, 1.5), 0.5);
   gmm.addGaussian(getMixture(10.0, 2.0, 0.5, 0.01, 0.01, 0.1), 0.5);
-  gmm.saveFile("gmm.json");
 
-  auto samples = gmm.getSamples(1000, &e);
-  std::vector<Eigen::VectorXd> samples_vec;
+  Eigen::VectorXd point(2);
+  point << 10.5, 2.1;
 
-  for (int k = 0; k < samples.cols(); k++)
-  {
-    samples_vec.push_back(samples.col(k));
-  }
+  std::cout << gmm.getLikelihood(point) << std::endl;
 
-  GaussianMixtureModel gmm_fit = GaussianMixtureModel::fit(samples_vec);
-  gmm_fit.saveFile("gmm.json");
+  gmm.remap_invert();
+
+  point << 2.1, 10.5;
+  std::cout << gmm.getLikelihood(point) << std::endl;
+
+  // auto samples = gmm.getSamples(1000, &e);
+  // std::vector<Eigen::VectorXd> samples_vec;
+
+  // for (int k = 0; k < samples.cols(); k++)
+  // {
+  //   samples_vec.push_back(samples.col(k));
+  // }
+
+  // GaussianMixtureModel gmm_fit = GaussianMixtureModel::fit(samples_vec);
+  // gmm_fit.saveFile("gmm.json");
 
   // remap
   // invert

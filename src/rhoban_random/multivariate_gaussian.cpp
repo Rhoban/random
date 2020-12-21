@@ -1,3 +1,4 @@
+#include <iostream>
 #include "rhoban_random/multivariate_gaussian.h"
 
 #include <Eigen/Dense>
@@ -419,6 +420,64 @@ Eigen::VectorXd MultivariateGaussian::computeDistanceFromMean(const Eigen::Vecto
   }
 
   return delta;
+}
+
+void MultivariateGaussian::remap(const std::vector<int>& remapping)
+{
+  if (remapping.size() != dimension())
+  {
+    throw new std::runtime_error("Remapping should be the size of dimensions");
+  }
+  auto remapping_test = remapping;
+  std::sort(remapping_test.begin(), remapping_test.end());
+  for (int k = 0; k < remapping_test.size(); k++)
+  {
+    if (remapping_test[k] != k)
+    {
+      throw new std::runtime_error("Remapping should be an array of indexes containing all variables indexes");
+    }
+  }
+
+  Eigen::VectorXd new_mu(mu.size());
+  Eigen::VectorXi new_circularity(dims_circularity.size());
+  Eigen::MatrixXd new_covar(covar.rows(), covar.cols());
+
+  for (int k = 0; k < remapping.size(); k++)
+  {
+    new_mu[k] = mu[remapping[k]];
+    new_circularity[k] = dims_circularity[remapping[k]];
+
+    for (int l = 0; l < remapping.size(); l++)
+    {
+      int i = remapping[k];
+      int j = remapping[l];
+      if (j < i)
+      {
+        int tmp = i;
+        i = j;
+        j = tmp;
+      }
+
+      new_covar(k, l) = covar(i, j);
+    }
+  }
+
+  mu = new_mu;
+  covar = new_covar;
+  dims_circularity = new_circularity;
+  computeDecomposition();
+}
+
+void MultivariateGaussian::remap_invert()
+{
+  int dim = dimension();
+  std::vector<int> remapping(dim);
+  for (int k = 0; k < dim; k++)
+  {
+    remapping[k] = dim - k - 1;
+  }
+
+  remap(remapping);
 }
 
 }  // namespace rhoban_random

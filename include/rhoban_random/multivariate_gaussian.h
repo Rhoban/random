@@ -71,6 +71,13 @@ public:
 
   std::string getClassName() const;
 
+  /// Remaps (reorder) the variables according to given remapping
+  /// This remapping should be an array containing all indexes once
+  void remap(const std::vector<int>& remapping);
+
+  /// Equivalent to remap the variables backward
+  void remap_invert();
+
 private:
   /// The mean vector
   Eigen::VectorXd mu;
