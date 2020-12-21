@@ -78,6 +78,12 @@ public:
   /// Equivalent to remap the variables backward
   void remap_invert();
 
+  /// Marginalizes the last variables (only keep the n first ones)
+  MultivariateGaussian marginalize(int n) const;
+
+  /// Condition the gaussian with a given value for the n first variables
+  MultivariateGaussian condition(Eigen::VectorXd& value) const;
+
 private:
   /// The mean vector
   Eigen::VectorXd mu;

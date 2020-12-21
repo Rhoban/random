@@ -60,6 +60,12 @@ public:
   /// Equivalent to remap the variables backward
   void remap_invert();
 
+  /// Marginalize the last dimensions (keep only n variables)
+  GaussianMixtureModel marginalize(int n) const;
+
+  /// Condition the GMM with a given sample
+  GaussianMixtureModel condition(Eigen::VectorXd& value) const;
+
   int n_parameters() const;
   double bic(const std::vector<Eigen::VectorXd>& points) const;
 

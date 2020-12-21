@@ -210,6 +210,42 @@ void GaussianMixtureModel::remap_invert()
   }
 }
 
+GaussianMixtureModel GaussianMixtureModel::marginalize(int n) const
+{
+  GaussianMixtureModel gmm;
+
+  for (int k = 0; k < gaussians.size(); k++)
+  {
+    gmm.addGaussian(gaussians[k].marginalize(n), gaussians_weights[k]);
+  }
+
+  return gmm;
+}
+
+GaussianMixtureModel GaussianMixtureModel::condition(Eigen::VectorXd& value) const
+{
+  std::vector<MultivariateGaussian> marginalized_gaussians(gaussians.size());
+  std::vector<MultivariateGaussian> conditionned_gaussians(gaussians.size());
+  std::vector<double> new_weights(gaussians.size());
+  double new_weights_sum = 0;
+
+  for (int k = 0; k < gaussians.size(); k++)
+  {
+    marginalized_gaussians[k] = gaussians[k].marginalize(value.size());
+    conditionned_gaussians[k] = gaussians[k].condition(value);
+    new_weights[k] = gaussians_weights[k] * marginalized_gaussians[k].getLikelihood(value);
+    new_weights_sum += new_weights[k];
+  }
+
+  GaussianMixtureModel gmm;
+  for (int k = 0; k < gaussians.size(); k++)
+  {
+    gmm.addGaussian(conditionned_gaussians[k], new_weights[k] / new_weights_sum);
+  }
+
+  return gmm;
+}
+
 int GaussianMixtureModel::n_parameters() const
 {
   int dim = dimension();

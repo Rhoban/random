@@ -480,4 +480,46 @@ void MultivariateGaussian::remap_invert()
   remap(remapping);
 }
 
+MultivariateGaussian MultivariateGaussian::marginalize(int n) const
+{
+  if (n < 1 || n > dimension())
+  {
+    throw std::runtime_error("You can marginalize 1 to dimension variables only");
+  }
+
+  auto new_mu = mu.block(0, 0, n, 1);
+  auto new_covar = covar.block(0, 0, n, n);
+  auto new_circularity = dims_circularity.block(0, 0, n, 1);
+
+  return MultivariateGaussian(new_mu, new_covar, new_circularity);
+}
+
+MultivariateGaussian MultivariateGaussian::condition(Eigen::VectorXd& value) const
+{
+  int dim = dimension();
+  if (value.size() >= dim)
+  {
+    throw std::runtime_error("You should condition maximum dimension - 1 variables");
+  }
+
+  int keep = dim - value.size();
+
+  // https://memmows.sciencesconf.org/data/pages/MEMMO_WinterSchool_SylvainCalinon_printedVersion.pdf
+  auto mu_i = mu.block(0, 0, value.size(), 1);
+  auto mu_o = mu.block(value.size(), 0, keep, 1);
+
+  auto sigma_i = covar.block(0, 0, value.size(), value.size());
+  auto sigma_o = covar.block(value.size(), value.size(), keep, keep);
+  auto sigma_io = covar.block(0, value.size(), value.size(), keep);
+  auto sigma_oi = covar.block(value.size(), 0, keep, value.size());
+
+  auto sigma_i_inverse = sigma_i.inverse();
+  auto new_mu = mu_o + sigma_oi * sigma_i_inverse * (value - mu_i);
+  auto new_covar = sigma_o - sigma_oi * sigma_i_inverse * sigma_io;
+
+  auto new_circularity = dims_circularity.block(value.size(), 0, keep, 1);
+
+  return MultivariateGaussian(new_mu, new_covar, new_circularity);
+}
+
 }  // namespace rhoban_random
