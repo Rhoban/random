@@ -195,6 +195,20 @@ double MultivariateGaussian::getLogLikelihood(const Eigen::VectorXd& point) cons
   return -0.5 * (std::log(determinant) + tmp1 + (double)size * std::log(2.0 * M_PI));
 }
 
+double MultivariateGaussian::getChiSquare(const Eigen::VectorXd& point) const
+{
+  // Compute distance from mean
+  Eigen::VectorXd delta = computeDistanceFromMean(point);
+  // throw error if point is out of range
+  if (delta.size() == 0)
+  {
+    throw std::logic_error("MultivariateGaussian: point is out of range");
+  }
+
+  // Compute likelihood
+  return delta.transpose() * covar_inv * delta;
+}
+
 void MultivariateGaussian::fit(const std::vector<Eigen::VectorXd>& data, const Eigen::VectorXi& isCircular)
 {
   // Check sizes

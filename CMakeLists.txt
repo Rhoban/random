@@ -1,10 +1,18 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rhoban_random)
 
+option(RHOBAN_RANDOM_ENABLE_EXAMPLES "Building examples" OFF)
+option(RHOBAN_RANDOM_ENABLE_OPENCV "Building with OpenCV" ON)
+
+if (RHOBAN_RANDOM_ENABLE_OPENCV)
+  set(OpenCV_DIR "/usr/local/include/")
+  find_package(OpenCV 3.2.0 REQUIRED)
+  add_definitions(-DENABLE_OPENCV)
+endif ()
+
 find_package(catkin REQUIRED COMPONENTS
   eigen rhoban_utils)
 
-option(RHOBAN_RANDOM_ENABLE_EXAMPLES "Building examples" OFF)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 catkin_package(
@@ -41,6 +49,18 @@ add_library(rhoban_random
   ${ALL_SOURCES}
 )
 
+set (LINKED_LIBRARIES
+  ${catkin_LIBRARIES}
+  rhoban_random
+)
+
+if (RHOBAN_RANDOM_ENABLE_OPENCV)
+  set (LINKED_LIBRARIES
+    ${LINKED_LIBRARIES}
+    ${OpenCV_LIBS}
+  )
+endif ()
+
 set(TESTS
   gaussian_mixture_model
   )
@@ -50,11 +70,11 @@ if (CATKIN_ENABLE_TESTING)
   foreach(test ${TESTS})
     string(REPLACE "/" "_" id ${test})
     catkin_add_gtest(${id} tests/${test}.cpp)
-    target_link_libraries(${id} ${catkin_LIBRARIES} rhoban_random)
+    target_link_libraries(${id} ${LINKED_LIBRARIES})
   endforeach(test)
 endif()
 
 if (RHOBAN_RANDOM_ENABLE_EXAMPLES)
   add_executable(gmm examples/gmm.cpp)
-  target_link_libraries(gmm ${catkin_LIBRARIES} rhoban_random)
+  target_link_libraries(gmm ${LINKED_LIBRARIES})
 endif ()

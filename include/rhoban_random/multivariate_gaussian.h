@@ -54,6 +54,9 @@ public:
   /// Return the logarithm of the likelihood at the given point
   double getLogLikelihood(const Eigen::VectorXd& point) const;
 
+  /// Returns the X² value for given position
+  double getChiSquare(const Eigen::VectorXd& point) const;
+
   /// Compute the classic estimation of gaussian mean and covariance from given
   /// data vectors.
   /// If optional isCircular is not empty, each non zero value

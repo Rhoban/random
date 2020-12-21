@@ -1,3 +1,6 @@
+#ifdef ENABLE_OPENCV
+#include <opencv2/ml.hpp>
+#endif
 #include <rhoban_random/gaussian_mixture_model.h>
 
 #include <rhoban_random/tools.h>
@@ -114,6 +117,25 @@ double GaussianMixtureModel::getLogLikelihood(const Eigen::VectorXd& point) cons
   return log(likelihood / getTotalWeight());
 }
 
+Eigen::VectorXd GaussianMixtureModel::getPosteriors(const Eigen::VectorXd& point) const
+{
+  Eigen::VectorXd posteriors(gaussians.size());
+
+  double total = 0;
+  double weights = getTotalWeight();
+  for (int k = 0; k < gaussians.size(); k++)
+  {
+    posteriors[k] = (gaussians_weights[k] / weights) * gaussians[k].getLikelihood(point);
+    total += posteriors[k];
+  }
+  for (int k = 0; k < gaussians.size(); k++)
+  {
+    posteriors[k] /= total;
+  }
+
+  return posteriors;
+}
+
 void GaussianMixtureModel::fromJson(const Json::Value& json_value, const std::string& dir_name)
 {
   if (!json_value.isMember("weights") || !json_value.isMember("gaussians"))
@@ -171,5 +193,115 @@ std::string GaussianMixtureModel::getClassName() const
 {
   return "GaussianMixtureModel";
 }
+
+int GaussianMixtureModel::n_parameters() const
+{
+  int dim = dimension();
+
+  // Number of components
+  int n_components = gaussians_weights.size();
+
+  // Number of parameters for means and covariances
+  int n_means = n_components * dim;
+  int n_covar = n_components * (dim * (dim + 1)) / 2;
+
+  // Adding the number of components (weights)
+  return n_means + n_covar + n_components - 1;
+}
+
+double GaussianMixtureModel::bic(const std::vector<Eigen::VectorXd>& points) const
+{
+  double log_likelihood = 0;
+  for (int k = 0; k < points.size(); k++)
+  {
+    log_likelihood += getLogLikelihood(points[k]);
+  }
+
+  return n_parameters() * log(points.size()) - 2 * log_likelihood;
+}
+
+#ifdef ENABLE_OPENCV
+GaussianMixtureModel fromCV(cv::ml::EM* em)
+{
+  GaussianMixtureModel gmm;
+
+  std::vector<cv::Mat> covs;
+  auto means = em->getMeans();
+  em->getCovs(covs);
+  int dims = means.cols;
+
+  for (int k = 0; k < em->getClustersNumber(); k++)
+  {
+    Eigen::VectorXd mean(dims);
+    Eigen::MatrixXd covariance(dims, dims);
+    for (int i = 0; i < dims; i++)
+    {
+      mean[i] = means.at<double>(k, i);
+
+      for (int j = 0; j < dims; j++)
+      {
+        covariance(i, j) = covs[k].at<double>(i, j);
+      }
+    }
+
+    double weight = em->getWeights().at<double>(k);
+    MultivariateGaussian gaussian(mean, covariance);
+    gmm.addGaussian(gaussian, weight);
+    ;
+  }
+
+  return gmm;
+}
+
+/// Using (OpenCV) EM to fit given points
+GaussianMixtureModel GaussianMixtureModel::fit(const std::vector<Eigen::VectorXd>& points, int minClusters,
+                                               int maxClusters)
+{
+  GaussianMixtureModel best;
+  double best_score;
+
+  auto em = cv::ml::EM::create();
+  cv::Mat samples((int)points.size(), (int)points.front().size(), CV_64FC1);
+  for (int k = 0; k < points.size(); k++)
+  {
+    for (int l = 0; l < points[k].size(); l++)
+    {
+      samples.at<double>(k, l) = points[k][l];
+    }
+  }
+
+  for (int clusters = minClusters; clusters <= maxClusters; clusters++)
+  {
+    em->setClustersNumber(clusters);
+    em->setCovarianceMatrixType(cv::ml::EM::COV_MAT_GENERIC);
+    em->trainEM(samples);
+    GaussianMixtureModel gaussian = fromCV(em);
+    double bic = gaussian.bic(points);
+
+    if (clusters == minClusters)
+    {
+      // This is the first attempt
+      best = gaussian;
+      best_score = bic;
+    }
+    else
+    {
+      if (bic < best_score)
+      {
+        // This GMM is better
+        best = gaussian;
+        best_score = bic;
+      }
+      else
+      {
+        // The previous GMM was better, BIC is increasing, stopping
+        break;
+      }
+    }
+  }
+
+  return best;
+}
+#endif
 
 }  // namespace rhoban_random

@@ -42,6 +42,9 @@ public:
   /// Return the logarithm of the likelihood at the given point
   double getLogLikelihood(const Eigen::VectorXd& point) const;
 
+  /// Get posterior vector (the size will be the same as the number of gaussians)
+  Eigen::VectorXd getPosteriors(const Eigen::VectorXd& point) const;
+
   /// Deserializes from a json content found in 'dir_name'
   void fromJson(const Json::Value& json_value, const std::string& dir_name);
 
@@ -49,6 +52,15 @@ public:
   Json::Value toJson() const;
 
   std::string getClassName() const;
+
+  int n_parameters() const;
+  double bic(const std::vector<Eigen::VectorXd>& points) const;
+
+#ifdef ENABLE_OPENCV
+  /// Using (OpenCV) EM to fit given points
+  static GaussianMixtureModel fit(const std::vector<Eigen::VectorXd>& points, int minClusters = 1,
+                                  int maxClusters = 16);
+#endif
 
 private:
   std::vector<MultivariateGaussian> gaussians;
