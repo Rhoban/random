@@ -82,7 +82,13 @@ public:
   MultivariateGaussian marginalize(int n) const;
 
   /// Condition the gaussian with a given value for the n first variables
-  MultivariateGaussian condition(Eigen::VectorXd& value) const;
+  MultivariateGaussian condition(const Eigen::VectorXd& value) const;
+
+  /// Get the gradient of the likelihood for a given point
+  Eigen::VectorXd likelihoodGradient(const Eigen::VectorXd& point) const;
+
+  /// Get the hessian of the likelihood for a given point
+  Eigen::MatrixXd likelihoodHessian(const Eigen::VectorXd& point) const;
 
 private:
   /// The mean vector

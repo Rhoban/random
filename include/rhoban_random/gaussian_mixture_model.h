@@ -45,6 +45,12 @@ public:
   /// Get posterior vector (the size will be the same as the number of gaussians)
   Eigen::VectorXd getPosteriors(const Eigen::VectorXd& point) const;
 
+  /// Get the gradient of the likelihood for a given point
+  Eigen::VectorXd likelihoodGradient(const Eigen::VectorXd& point) const;
+
+  /// Get the hessian of the likelihood for a given point
+  Eigen::MatrixXd likelihoodHessian(const Eigen::VectorXd& point) const;
+
   /// Deserializes from a json content found in 'dir_name'
   void fromJson(const Json::Value& json_value, const std::string& dir_name);
 
@@ -64,7 +70,7 @@ public:
   GaussianMixtureModel marginalize(int n) const;
 
   /// Condition the GMM with a given sample
-  GaussianMixtureModel condition(Eigen::VectorXd& value) const;
+  GaussianMixtureModel condition(const Eigen::VectorXd& value) const;
 
   int n_parameters() const;
   double bic(const std::vector<Eigen::VectorXd>& points) const;

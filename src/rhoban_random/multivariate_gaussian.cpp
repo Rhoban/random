@@ -494,7 +494,7 @@ MultivariateGaussian MultivariateGaussian::marginalize(int n) const
   return MultivariateGaussian(new_mu, new_covar, new_circularity);
 }
 
-MultivariateGaussian MultivariateGaussian::condition(Eigen::VectorXd& value) const
+MultivariateGaussian MultivariateGaussian::condition(const Eigen::VectorXd& value) const
 {
   int dim = dimension();
   if (value.size() >= dim)
@@ -520,6 +520,18 @@ MultivariateGaussian MultivariateGaussian::condition(Eigen::VectorXd& value) con
   auto new_circularity = dims_circularity.block(value.size(), 0, keep, 1);
 
   return MultivariateGaussian(new_mu, new_covar, new_circularity);
+}
+
+Eigen::VectorXd MultivariateGaussian::likelihoodGradient(const Eigen::VectorXd& point) const
+{
+  // http://premmi.github.io/mode-of-multivariate-gaussian
+  return -getLikelihood(point) * covar_inv * (point - mu);
+}
+
+Eigen::MatrixXd MultivariateGaussian::likelihoodHessian(const Eigen::VectorXd& point) const
+{
+  // http://premmi.github.io/mode-of-multivariate-gaussian
+  return getLikelihood(point) * (covar_inv * (point - mu) * (point - mu).transpose() * covar_inv - covar_inv);
 }
 
 }  // namespace rhoban_random

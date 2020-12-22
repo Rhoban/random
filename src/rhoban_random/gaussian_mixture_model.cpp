@@ -136,6 +136,32 @@ Eigen::VectorXd GaussianMixtureModel::getPosteriors(const Eigen::VectorXd& point
   return posteriors;
 }
 
+Eigen::VectorXd GaussianMixtureModel::likelihoodGradient(const Eigen::VectorXd& point) const
+{
+  Eigen::VectorXd gradient(dimension());
+  gradient.setZero();
+
+  for (int k = 0; k < gaussians.size(); k++)
+  {
+    gradient += gaussians_weights[k] * gaussians[k].likelihoodGradient(point);
+  }
+
+  return gradient;
+}
+
+Eigen::MatrixXd GaussianMixtureModel::likelihoodHessian(const Eigen::VectorXd& point) const
+{
+  Eigen::MatrixXd hessian(dimension(), dimension());
+  hessian.setZero();
+
+  for (int k = 0; k < gaussians.size(); k++)
+  {
+    hessian += gaussians_weights[k] * gaussians[k].likelihoodHessian(point);
+  }
+
+  return hessian;
+}
+
 void GaussianMixtureModel::fromJson(const Json::Value& json_value, const std::string& dir_name)
 {
   if (!json_value.isMember("weights") || !json_value.isMember("gaussians"))
@@ -222,7 +248,7 @@ GaussianMixtureModel GaussianMixtureModel::marginalize(int n) const
   return gmm;
 }
 
-GaussianMixtureModel GaussianMixtureModel::condition(Eigen::VectorXd& value) const
+GaussianMixtureModel GaussianMixtureModel::condition(const Eigen::VectorXd& value) const
 {
   std::vector<MultivariateGaussian> marginalized_gaussians(gaussians.size());
   std::vector<MultivariateGaussian> conditionned_gaussians(gaussians.size());
