@@ -162,6 +162,37 @@ Eigen::MatrixXd GaussianMixtureModel::likelihoodHessian(const Eigen::VectorXd& p
   return hessian;
 }
 
+Eigen::VectorXd GaussianMixtureModel::gradientAscent(const Eigen::VectorXd& starting_point,
+                                                     const Eigen::VectorXd& lower_bound, Eigen::VectorXd& upper_bound)
+{
+  if (starting_point.size() != lower_bound.size() || starting_point.size() != upper_bound.size())
+  {
+    throw new std::runtime_error("Bad dimension: starting point lower & upper bound should have same dimension");
+  }
+
+  auto gradient = this->likelihoodGradient(starting_point);
+
+  double lambda = INFINITY;
+  for (int k = 0; k < starting_point.size(); k++)
+  {
+    double v = gradient[k];
+    double l;
+
+    if (v < 0)
+    {
+      l = lower_bound[k];
+    }
+    else
+    {
+      l = upper_bound[k];
+    }
+
+    lambda = std::min(lambda, l / v);
+  }
+
+  return starting_point + lambda * gradient;
+}
+
 void GaussianMixtureModel::fromJson(const Json::Value& json_value, const std::string& dir_name)
 {
   if (!json_value.isMember("weights") || !json_value.isMember("gaussians"))

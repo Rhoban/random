@@ -51,6 +51,10 @@ public:
   /// Get the hessian of the likelihood for a given point
   Eigen::MatrixXd likelihoodHessian(const Eigen::VectorXd& point) const;
 
+  // Perform one step of gradient ascent, with a maximum step bounded with given lower and upper bounds
+  Eigen::VectorXd gradientAscent(const Eigen::VectorXd& starting_point, const Eigen::VectorXd& lower_bound,
+                                 Eigen::VectorXd& upper_bound);
+
   /// Deserializes from a json content found in 'dir_name'
   void fromJson(const Json::Value& json_value, const std::string& dir_name);
 
