@@ -49,6 +49,10 @@ add_library(rhoban_random
   ${ALL_SOURCES}
 )
 
+if (RHOBAN_RANDOM_ENABLE_OPENCV)
+  target_link_libraries(rhoban_random ${OpenCV_LIBS})
+endif ()
+
 set (LINKED_LIBRARIES
   ${catkin_LIBRARIES}
   rhoban_random
