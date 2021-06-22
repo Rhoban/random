@@ -1,21 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rhoban_random)
 
-find_package(catkin REQUIRED COMPONENTS
-  eigen)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES rhoban_random
-  CATKIN_DEPENDS eigen
-)
-
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  )
 
 set(DIRECTORIES
   src/rhoban_random
@@ -39,16 +26,21 @@ endforeach (DIRECTORY)
 add_library(rhoban_random
   ${ALL_SOURCES}
 )
+target_link_libraries(rhoban_random PUBLIC Eigen3::Eigen) 
+target_include_directories(rhoban_random PUBLIC 
+  include
+)
+
 
 set(TESTS
   gaussian_mixture_model
   )
 
-if (CATKIN_ENABLE_TESTING)
-  # create an executable for each test
-  foreach(test ${TESTS})
-    string(REPLACE "/" "_" id ${test})
-    catkin_add_gtest(${id} tests/${test}.cpp)
-    target_link_libraries(${id} ${catkin_LIBRARIES} rhoban_random)
-  endforeach(test)
-endif()
+#if (CATKIN_ENABLE_TESTING)
+#  # create an executable for each test
+#  foreach(test ${TESTS})
+#    string(REPLACE "/" "_" id ${test})
+#    catkin_add_gtest(${id} tests/${test}.cpp)
+#    target_link_libraries(${id} rhoban_random)
+#  endforeach(test)
+#endif()
