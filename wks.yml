@@ -1,2 +1,2 @@
 deps:
-  - rhobandeps/eigen
+  - rhobandeps/eigen#wks
