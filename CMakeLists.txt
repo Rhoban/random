@@ -21,7 +21,7 @@ foreach (DIRECTORY ${DIRECTORIES})
     set (ALL_SOURCES ${ALL_SOURCES} ${PREFIXED_SOURCES})
 endforeach (DIRECTORY)
 
-add_library(rhoban_random
+add_library(rhoban_random SHARED
   ${ALL_SOURCES}
 )
 target_link_libraries(rhoban_random PUBLIC Eigen3::Eigen) 
